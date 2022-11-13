@@ -116,3 +116,8 @@ def test_url_reveal():
     url = URL(host='host', username='user', password='1234')
     assert str(url) == '//user:********@host'
     assert url.reveal() == '//user:1234@host'
+
+
+def test_url_from_url():
+    url = URL()
+    assert url.from_string(url) is url

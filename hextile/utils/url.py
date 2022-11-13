@@ -39,7 +39,9 @@ class URL:
         return f'<URL {self}>'
     
     @classmethod
-    def from_string(cls, string: str) -> URL:
+    def from_string(cls, string: str|URL) -> URL:
+        if isinstance(string, URL):
+            return string
         result = urllib.parse.urlparse(string)
         scheme = username = password = host = port = path = query = fragment = None
         if result.scheme:
