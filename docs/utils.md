@@ -71,3 +71,41 @@ A collection of functions that work with datetimes and properly handle timezones
     >>> string_to_datetime('31/12/1999 23:00:00', format='%d/%m/%Y %H:%M:%S')
     datetime.datetime(2000, 1, 1, 12, 0, 0, 0, tzinfo=datetime.timezone.utc)
     ```
+
+## URL
+
+The `URL` class provides an easy way to parse a URL (according to RFC 1808).
+
+```python
+>>> url = URL.from_string('http://www.example.com/path')
+>>> url.scheme
+'http'
+>>> url.host
+'www.example.com'
+>>> url.path
+'/path'
+
+>>> url = URL.from_string('scheme://user:1234@host:8000/path?x=1&y=2#fragment')
+>>> url.scheme
+'scheme'
+>>> url.username
+'user'
+>>> url.password
+'1234'
+>>> url.host
+'host'
+>>> url.port
+8000
+>>> url.path
+'/path'
+>>> url.query
+{'x': '1', 'y': '2'}
+>>> url.fragment
+'fragment'
+
+# Note that the password is censored by default, and has to revealed explicitly:
+>>> print(url)
+scheme://user:********@host:8000/path?x=1&y=2#fragment
+>>> print(url.reveal())
+scheme://user:1234@host:8000/path?x=1&y=2#fragment
+```

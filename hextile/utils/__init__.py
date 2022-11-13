@@ -7,6 +7,7 @@ from .datetime_ import (
     datetime_to_string,
     datetime_from_string,
 )
+from .url import URL
 
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     'datetime_to_string',
     'datetime_to_timestamp',
     'now',
+    'URL',
 ]
