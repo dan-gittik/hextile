@@ -1,16 +1,19 @@
 from __future__ import annotations
-from typing import Any, Callable, Type, TypeVar
+from typing import Any, Callable, Generic, Type, TypeVar
 
 
-class CachedProperty:
+T = TypeVar('T')
+
+
+class cached_property(Generic[T]):
 
     cached_properties_attribute = '_cached_properties'
     refresh_method = 'refresh'
 
-    def __init__(self, getter: GetterType):
+    def __init__(self, getter: Callable[..., T]):
         self.getter = getter
         self.name = self.getter.__name__
-        self.setter: SetterType = None
+        self.setter: Callable[..., T] = None
     
     def __str__(self):
         return f'cached property {self.name!r}'
@@ -27,7 +30,7 @@ class CachedProperty:
             setattr(owner, self.refresh_method, refresh)
         cached_properties.append(name)
     
-    def __get__(self, instance: object, owner: Type):
+    def __get__(self, instance: object, owner: Type) -> T:
         if instance is None:
             return self
         if self.name not in instance.__dict__:
@@ -42,19 +45,11 @@ class CachedProperty:
     def __delete__(self, instance: object) -> None:
         instance.__dict__.pop(self.name, None)
     
-    def on_set(self, setter: SetterType) -> CachedProperty:
+    def on_set(self, setter: Callable[[object, T], T]) -> cached_property:
         self.setter = setter
         return self
 
 
 def refresh(self: object) -> None:
-    for name in getattr(self.__class__, CachedProperty.cached_properties_attribute, []):
+    for name in getattr(self.__class__, cached_property.cached_properties_attribute, []):
         self.__dict__.pop(name, None)
-
-
-T = TypeVar('T')
-GetterType = Callable[[object], T]
-SetterType = Callable[[object, Any], T]
-
-
-cached_property = CachedProperty
