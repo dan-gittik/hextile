@@ -109,3 +109,140 @@ scheme://user:********@host:8000/path?x=1&y=2#fragment
 >>> print(url.reveal())
 scheme://user:1234@host:8000/path?x=1&y=2#fragment
 ```
+
+## Cached Property
+
+The `cached_property` decorator turns a method into a property whose value is only computed once, and cached thereafter.
+
+```python
+>>> class A:
+...     def __init__(self):
+...         self.x = 0
+...     @cached_property
+...     def p(self):
+...         self.x += 1
+...         return self.x
+>>> a = A()
+>>> a.p
+1
+>>> a.p
+1
+```
+
+A cached property can be refreshed, so as to remove its cached value and prompt a recomputation on the next access, by deleting it (if no value is cached, deleting it has no effect).
+
+```python
+>>> del a.p
+>>> a.p
+2
+>>> del a.p
+>>> del a.p # Also OK.
+```
+
+A cached property can be set, in which case its new value is cached.
+
+```python
+>>> a.p = 0
+>>> a.p
+0
+>>> # Deletion has the same effect of uncaching the value and prompting recomputation:
+>>> del a.p
+>>> a.p
+3
+```
+
+This class differs from `functools.cached_property` in two main ways: first, it supports augmenting the cached property setter, so if a value is assigned it has a chance to undergo some transformation before replacing the cached value.
+
+```python
+>>> class A:
+...     @cached_property
+...     def p(self):
+...         return 1
+...     @p.on_set
+...     def p(self, x):
+...         return x + 1
+>>> a = A()
+>>> a.p
+1
+>>> a.p = 2
+>>> a.p
+3
+```
+
+Second, it keeps track of all the class's cached properties, so it's possible to quickly and easily refresh entire objects, using an auto-added `refresh()` method (its name can be changed by setting `cached_property.refresh_method`; the name of the class attribute which stores all the class's cached properties, which defaults to `_cached_properties`, can be changed as well, by setting `cached_property.cached_properties_attribute`).
+
+```python
+>>> class A:
+...     def __init__(self):
+...         self.x = 0
+...         self.y = 0
+...     @cached_property
+...     def p(self):
+...         self.x += 1
+...         return self.x
+...     @cached_property
+...     def q(self):
+...         self.y += 1
+...         return self.y
+>>> a = A()
+>>> a.p
+1
+>>> a.q
+1
+>>> a.refresh()
+>>> a.p
+2
+>>> a.q
+2
+```
+
+## Execution
+
+The `Execution` class encapsulates the result of a command execution (similar to `subprocess.Popen` or `subprocess.run`), but provides a nicer interface to execute commands and manage their timeouts.
+
+```python
+>>> e = Execution.run('echo', 'Hello, world!')
+>>> e.exit_code
+0
+>>> e.success
+True
+>>> e.stdout
+b'Hello, world!\n'
+>>> e.output
+'Hello, world!'
+>>> e.stderr
+b''
+>>> e.error
+''
+```
+
+The `run(*command, stdin=None, timeout=None, sigterm_timeout=None)` also accepts:
+
+- The standard input (as a string or bytes) to be passed to the executed command.
+
+    ```python
+    >>> e = Execution.run('cat', '-', stdin='Hello, world!')
+    >>> e.stdout
+    b'Hello, world!'
+    ```
+
+- A timeout in seconds, after which the process is terminated (defaults to `None`, which can be changed by setting `Execution.default_timeout`).
+
+    ```python
+    >>> e = Execution.run('sleep', 3, timeout=1)
+    >>> e.exit_code
+    -15 # Ends after ~1 second with SIGTERM.
+    ```
+
+- A SIGTERM timeout in seconds, after which the process is forcefully killed (in case it doesn't terminate properly; defaults to `3.0`, which can be changed by setting `Execution.default_sigterm_timeout`).
+
+    ```python
+    >>> e = Execution.run('bash', '-c', 'trap : SIGTERM; sleep 3', timeout=1)
+    >>> e.exit_code
+    0 # Takes the full 3 seconds.
+    >>> e = Execution.run('bash', '-c', 'trap : SIGTERM; sleep 3', timeout=1, sigterm_timeout=1)
+    >>> e.exit_code
+    -9 # Ends after ~2 seconds with SIGKILL.
+    ```
+
+    Note that this means that when passing in a timeone, the process might actually run for up to `timeout + 3` seconds (or, more generally, `timeout + sigterm_timeout`) seconds. To get exact timeouts, either pass in `sigterm_timeout=0`, or set `Execution.default_sigterm_timeout` to `0`.
