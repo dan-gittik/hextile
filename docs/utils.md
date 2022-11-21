@@ -2,6 +2,13 @@
 
 A collection of utility function and classes.
 
+- [Dictionary](#Dictionary)
+- [Datetime](#Datetime)
+- [URL](#URL)
+- [Cached Property](#Cached-Property)
+- [Execution](#Execution)
+- [Colors](#Colors)
+
 ## Dictionary
 
 The `Dictionary` class extends the native dictionary type to support attribute access, modification and deletion.
@@ -246,3 +253,49 @@ The `run(*command, stdin=None, timeout=None, sigterm_timeout=None)` also accepts
     ```
 
     Note that this means that when passing in a timeone, the process might actually run for up to `timeout + 3` seconds (or, more generally, `timeout + sigterm_timeout`) seconds. To get exact timeouts, either pass in `sigterm_timeout=0`, or set `Execution.default_sigterm_timeout` to `0`.
+
+## Colors
+
+A collection of functions to work with RGB, HSV, hexadecimal and XTERM colors.
+
+RGB colors are represented as triplets of red, blue and green values, each of them an integer between 0 and 256; HSV colors are represented as triplets of hue, saturation and value, the hue an integer between 0 and 360 and the saturation and value integers between 0 and 100; hexadecimal colors are represented as a string of 6 hexadecimal colors, possibly starting with `#`; and XTERM colors are represented by a color ID, an integer between 0 and 256.
+
+- `validate_rgb((r, g, b))` receives an RGB color and validates it.
+
+- `rgb_distance((r1, g1, b1), (r2, g2, b2))` receives two RGB colors and returns the distance between them; the value is not useful in itself, except that more similar colors have lower distances.
+
+- `rgb_to_hsv((r, g, b))` receives an RGB color and returns an equivalent HSV color.
+
+- `rgb_to_hex((r, g, b))` receives an RGB color and returns an equivalent hexadecimal color.
+
+- `validate_hsv((h, s, v))` receives an HSV color and validates it.
+
+- `hsv_distance((h1, s1, v1), (h2, s2, v2))` receives two HSV colors and returns the distance between them; the value is not useful in itself, except that more similar colors have lower distances.
+
+- `hsv_to_rgb((h, s, v))` receives an HSV color and returns an equivalent RGB color.
+
+- `hsv_to_hex((h, s, v))` receives an HSV color and returns an equivalent hexadecimal color.
+
+- `validate_hex(hex)` receives a hexadecimal color and validates it.
+
+- `hex_distance(hex1, hex2)` receives two hexadecimal colors and returns the distance between them; the value is not useful in itself, except that more similar colors have lower distances.
+
+- `hex_to_rgb(hex)` receives a hexadecimal color and returns an equivalent RGB color.
+
+- `hex_to_hsv(hex)` receives a hexadecimal color and returns an equivalent HSV color.
+
+- `validate_xterm(xterm)` receives an XTERM color and validates it.
+
+- `xterm_to_rgb(xterm)` receives an XTERM color and returns an equivalent RGB color.
+
+- `rgb_to_xterm((r, g, b))` receives an RGB color, and returns the closest equivalent XTERM color.
+
+- `xterm_to_hsv(xterm)` receives an XTERM color and returns an equivalent HSV color.
+
+- `hsv_to_xterm((h, s, v))` receives an HSV color, and returns the closest equivalent XTERM color.
+
+- `xterm_to_hex(xterm)` receives an XTERM color and returns an equivalent hexadecimal color.
+
+- `hex_to_xterm(hex)` receives a hexadecimal color and returns the closest equivalent XTERM color.
+
+- `resolve_xterm(target)` receives a color as an XTERM ID, hexadecimal string, or RGB tuple and returns the closest equivalent XTERM color.
