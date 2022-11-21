@@ -3,13 +3,13 @@ from __future__ import annotations
 import pathlib
 
 from .drivers import FileSystemDriver
-from ..utils import URL
+from ..utils import URL, URLType
 
 
 class FileSystem:
 
-    def __init__(self, url: str|URL):
-        self.url = URL.from_string(url)
+    def __init__(self, url: URLType):
+        self.url = URL.parse(url)
         self.driver = FileSystemDriver.from_url(self.url)
     
     def __str__(self):
