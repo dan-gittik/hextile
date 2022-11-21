@@ -10,7 +10,7 @@ import pathlib
 import weakref
 
 from .drivers import FileSystemDriver
-from ..utils import cached_property,datetime_from_timestamp, Execution
+from ..utils import cached_property, datetime_from_timestamp, Execution
 
 
 class Path(str):
@@ -47,7 +47,7 @@ class Path(str):
         value = str(path)
         if value in cls._values:
             return cls._values[value]
-        instance = super().__new__(value)
+        instance = super().__new__(cls, value)
         instance._driver = driver
         instance._path = path
         if temporary:
@@ -92,59 +92,47 @@ class Path(str):
             return ''
         return self._path.name[self._dot_index:]
     
-    @cached_property
+    @property
     def exists(self) -> bool:
         return self._driver.exists(self._path)
     
-    @cached_property
+    @property
     def is_directory(self) -> bool:
         return self._driver.is_directory(self._path)
     
     @property
     def is_file(self) -> bool:
-        return not self.is_directory
-    
-    @cached_property
-    def status(self) -> FileSystemDriver.Status:
-        return self._driver.status(self._path)
+        return self.exists and not self.is_directory
     
     @property
     def size(self) -> int:
         if self.is_directory:
             return None
-        return self.status.size
+        return self._driver.status(self._path).size
     
     @property
-    def access_time(self) -> float:
-        return self.status.access_time
+    def timestamp(self) -> float:
+        return self._driver.status(self._path).time
     
     @property
-    def access_datetime(self) -> dt.datetime:
-        return self.access_time and datetime_from_timestamp(self.access_time)
-
-    @property
-    def modification_time(self) -> float:
-        return self.status.modification_time
-    
-    @property
-    def modification_datetime(self) -> dt.datetime:
-        return self.modification_time and datetime_from_timestamp(self.modification_time)
+    def datetime(self) -> dt.datetime:
+        return self.timestamp and datetime_from_timestamp(self.timestamp)
 
     @property
     def owner_id(self) -> int:
-        return self.status.owner_id
+        return self._driver.status(self._path).owner_id
     
     @property
     def group_id(self) -> int:
-        return self.status.group_id
+        return self._driver.status(self._path).group_id
     
     @property
     def owner_name(self) -> str:
-        return self.status.owner_name
+        return self._driver.owner_name(self._path)
     
     @property
     def group_name(self) -> str:
-        return self.status.group_name
+        return self._driver.group_name(self._path)
     
     @property
     def owner_readable(self) -> bool:
@@ -264,7 +252,6 @@ class Path(str):
     
     def create_directory(self) -> None:
         self._driver.create_directory(self._path)
-        self._refresh(exists=True, is_directory=True)
     
     def list(self) -> Iterator[Path]:
         for name in self._driver.list_directory(self._path):
@@ -294,11 +281,15 @@ class Path(str):
             yield
 
     def read(self, size: int = None, offset: int = None) -> bytes:
+        if offset is None:
+            offset = self._driver.start
         return self._driver.read(self._path, size, offset)
     
     def read_chunks(self, size: int = None, offset: int = None) -> Iterator[bytes]:
         if size is None:
             size = self.default_chunk_size
+        if offset is None:
+            offset = self._driver.start
         yield from self._driver.read_chunks(self._path, size, offset)
     
     def read_text(
@@ -343,9 +334,8 @@ class Path(str):
             append: bool = None,
             truncate: bool = None,
     ) -> None:
-        offset, truncate = self._resolve_offset_and_truncate(offset, append, truncate)
+        offset, truncate = self._resolve_position(offset, append, truncate)
         self._driver.write(self._path, data, offset, truncate=truncate)
-        self._refresh(exists=True, is_directory=False)
     
     def write_chunks(
             self,
@@ -355,9 +345,8 @@ class Path(str):
             append: bool = None,
             truncate: bool = None,
     ) -> None:
-        offset, truncate = self._resolve_offset_and_truncate(offset, append, truncate)
+        offset, truncate = self._resolve_position(offset, append, truncate)
         self._driver.write_chunks(self._path, chunks, offset, truncate=truncate)
-        self._refresh(exists=True, is_directory=False)
 
     def write_text(
             self,
@@ -372,8 +361,11 @@ class Path(str):
             encoding = self.default_encoding
         if on_encoding_error is None:
             on_encoding_error = self.default_on_encoding_error
-        offset, truncate = self._resolve_offset_and_truncate(offset, append, truncate)
-        self.write(text.encode(encoding, on_encoding_error), offset, truncate=truncate)
+        self.write(
+            data = text.encode(encoding, on_encoding_error),
+            append = append,
+            truncate = truncate,
+        )
     
     def write_lines(
             self,
@@ -392,12 +384,15 @@ class Path(str):
         if linebreak is None:
             linebreak = self.default_linebreak
         linebreak = linebreak.encode()
-        offset, truncate = self._resolve_offset_and_truncate(offset, append, truncate)
         def chunks() -> Iterator[bytes]:
             for line in lines:
                 yield line.encode(encoding, on_encoding_error)
                 yield linebreak
-        self.write_chunks(chunks, offset, truncate=truncate)
+        self.write_chunks(
+            chunks = chunks,
+            append = append,
+            truncate = truncate,
+        )
     
     def execute(
             self,
@@ -415,7 +410,6 @@ class Path(str):
             self._driver.delete_directory(self._path)
         else:
             self._driver.delete_file(self._path)
-        self._refresh(exists=False, is_directory=False)
 
     def copy(
             self,
@@ -450,28 +444,23 @@ class Path(str):
     def _clone(self, path: pathlib.Path, skippable: bool = None) -> Path:
         return Path(self._driver, path, skippable=skippable)
     
-    def _refresh(self, exists: bool = None, is_directory: bool = None) -> None:
-        if exists is not None:
-            self.exists = exists
-        if is_directory is not None:
-            self.is_directory = is_directory
-        del self.status
-
     def _get_permission(self, mask: int) -> bool:
-        return bool(self.status.mode & mask)
+        mode = self._driver.status(self._path).mode
+        return bool(mode & mask)
 
     def _set_permission(self, mask: int, on: bool) -> int:
-        mode = self._mask(self.status.mode, mask, on)
+        mode = self._driver.status(self._path).mode
+        mode = self._mask(mode, mask, on)
         self._driver.change_mode(self._path, mode)
-        self.status.mode = mode
     
     def _get_permissions(self, readable_mask: int, writable_mask: int, executable_mask: int) -> str:
+        mode = self._driver.status(self._path).mode
         output = []
-        if self.status.mode & readable_mask:
+        if mode & readable_mask:
             output.append(self.readable)
-        if self.status.mode & writable_mask:
+        if mode & writable_mask:
             output.append(self.writable)
-        if self.status.mode & executable_mask:
+        if mode & executable_mask:
             output.append(self.executable)
         return ''.join(output)
 
@@ -483,12 +472,11 @@ class Path(str):
             executable_mask: int,
     ) -> None:
         permissions = permissions.lower()
-        mode = self.status.mode
+        mode = self._driver.status(self._path).mode
         mode = self._mask(mode, readable_mask, self.readable in permissions)
         mode = self._mask(mode, writable_mask, self.writable in permissions)
         mode = self._mask(mode, executable_mask, self.executable in permissions)
         self._driver.change_mode(self._path, mode)
-        self.status.mode = mode
 
     def _mask(self, mode: int, mask: int, on: bool) -> int:
         return (mode | mask) if on else (mode & ~mask)
@@ -498,7 +486,7 @@ class Path(str):
             into_directory = self.default_into_directory
         if overwrite is None:
             overwrite = self.default_overwrite
-        path = resolve_path(path, relative_to=self)
+        path = resolve_path(path, relative_to=self.directory)
         if into_directory:
             path = path / self.basename
         target = self._clone(path)
@@ -506,7 +494,7 @@ class Path(str):
             if overwrite:
                 target.delete()
             else:
-                raise ValueError(f'path {target!r} already exists')
+                raise FileExistsError(f'path {target!r} already exists')
         return target
     
     def _dfs_walk(self, max_depth: int) -> Iterator[Path]:
@@ -528,8 +516,13 @@ class Path(str):
                         continue
                     roots.append((depth + 1, entry))
 
-    def _resolve_offset_and_truncate(self, offset: int, append: bool, truncate: bool) -> tuple[int, bool]:
-        if offset is not None:
+    def _resolve_position(
+            self,
+            offset: int,
+            append: bool,
+            truncate: bool,
+    ) -> tuple[int, bool]:
+        if offset:
             if append:
                 raise ValueError(f'cannot write data at offset {offset} while also appending it')
             if truncate:
@@ -541,7 +534,7 @@ class Path(str):
                 truncate = self.default_truncate
             if append and truncate:
                 raise ValueError(f'cannot append data while also truncating the file')
-            offset = self._driver.end if append else 0
+            offset = self._driver.end if append else self._driver.start
         return offset, truncate
 
 
@@ -551,8 +544,8 @@ PathType = str | pathlib.Path | Path
 def resolve_path(path: PathType, relative_to: Path = None) -> pathlib.Path:
     if isinstance(path, Path):
         return path._path
-    if isinstance(path, pathlib.Path):
-        return path.resolve()
     if relative_to is not None:
         return (relative_to._path / path).resolve()
+    if isinstance(path, pathlib.Path):
+        return path.resolve()
     return pathlib.Path(path).resolve()

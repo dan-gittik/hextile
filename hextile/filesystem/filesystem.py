@@ -10,7 +10,7 @@ class FileSystem:
 
     def __init__(self, url: URLType):
         self.url = URL.parse(url)
-        self.driver = FileSystemDriver.from_url(self.url)
+        self._driver = FileSystemDriver.from_url(self.url)
     
     def __str__(self):
         return f'filesystem at {self.url}'
@@ -19,16 +19,16 @@ class FileSystem:
         return f'<{self}>'
     
     def current_directory(self) -> Path:
-        return Path(self, self.driver.current_directory())
+        return self._path(self._driver.current_directory())
     
     def home_directory(self) -> Path:
-        return Path(self, self.driver.home_directory())
+        return self._path(self._driver.home_directory())
     
     def temporary_directory(self) -> Path:
-        return Path(self, self.driver.temporary_directory(), temporary=True)
+        return self._path(self._driver.temporary_directory(), temporary=True)
 
-    def path(self, path: str|pathlib.Path|Path, exists: bool = None) -> Path:
-        path = Path(self, path)
+    def path(self, path: PathType, exists: bool = None) -> Path:
+        path = self._path(path)
         if exists is not None:
             if exists and not path.exists:
                 raise FileNotFoundError(f'path {path!r} does not exist')
@@ -38,41 +38,44 @@ class FileSystem:
     
     def directory(
             self,
-            path: str|pathlib.Path|Path,
+            path: PathType,
             exists: bool = None,
             create: bool = None,
     ) -> Path:
-        path = Path(self, str(path))
+        path = self._path(path)
         if exists is not None:
             if exists:
                 if not path.exists:
-                    raise FileNotFoundError(f'path {path!r} does not exist')
+                    raise FileNotFoundError(f'directory {path!r} does not exist')
                 if not path.is_directory:
                     raise NotADirectoryError(f'path {path!r} is not a directory')
             if not exists and path.exists:
-                raise FileExistsError(f'path {path!r} exists')
+                raise FileExistsError(f'directory {path!r} exists')
         if create:
             path.create_directory()
         return path
 
     def file(
             self,
-            path: str|pathlib.Path|Path,
+            path: PathType,
             exists: bool = None,
     ) -> Path:
-        path = Path(self, path)
+        path = self._path(path)
         if exists is not None:
             if exists:
                 if not path.exists:
-                    raise FileNotFoundError(f'path {path!r} does not exist')
+                    raise FileNotFoundError(f'file {path!r} does not exist')
                 if path.is_directory:
                     raise IsADirectoryError(f'path {path!r} is not a file')
             if not exists and path.exists:
-                raise FileExistsError(f'path {path!r} exists')
+                raise FileExistsError(f'file {path!r} exists')
         return path
+
+    def _path(self, path: pathlib.Path, temporary: bool = None) -> Path:
+        return Path(self._driver, path, temporary=temporary)
 
 
 local_filesystem = FileSystem('local://')
 
 
-from .path import Path
+from .path import Path, PathType

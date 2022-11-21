@@ -20,6 +20,14 @@ class Execution:
         self.exit_code = exit_code
         self.stdout = stdout
         self.stderr = stderr
+    
+    def __str__(self):
+        if self.success:
+            return f'successful execution: {self.output or "no output"}'
+        return f'failed execution ({self.exit_code}): {self.error or "no error"}'
+    
+    def __repr__(self):
+        return f'<{self}>'
 
     @classmethod
     def run(

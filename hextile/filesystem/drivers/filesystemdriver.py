@@ -11,18 +11,16 @@ class FileSystemDriver:
     
     scheme: str = None
     drivers: dict[str, Type[FileSystemDriver]] = {}
+    start = 0
     end = -1
 
     @dataclass
     class Status:
         size: int
         mode: int
+        time: float = None
         owner_id: int = None
         group_id: int = None
-        owner_name: str = None
-        group_name: str = None
-        access_time: float = None
-        modification_time: float = None
 
     def __init_subclass__(cls):
         if not cls.scheme:
@@ -46,7 +44,7 @@ class FileSystemDriver:
         for scheme, driver in cls.drivers.items():
             if url.scheme == scheme:
                 return driver(url)
-        raise ValueError(f'unsupported URL scheme {url.scheme} (expected one of: {", ".join(cls.drivers)})')
+        raise ValueError(f'unsupported URL scheme {url.scheme!r} (expected one of: {", ".join(cls.drivers)})')
     
     def on_init(self) -> None:
         pass

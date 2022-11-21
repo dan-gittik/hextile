@@ -7,11 +7,6 @@ import pathlib
 import shutil
 import tempfile
 
-try:
-    import grp, pwd
-except ImportError:
-    grp = pwd = None
-
 from .filesystemdriver import FileSystemDriver
 from ...utils import Execution
 
@@ -31,19 +26,25 @@ class LocalFileSystemDriver(FileSystemDriver):
 
     def exists(self, path: pathlib.Path) -> bool:
         return path.exists()
+    
+    def is_directory(self, path: pathlib.Path) -> bool:
+        return path.is_dir()
 
     def status(self, path: pathlib.Path) -> FileSystemDriver.Status:
         stat = path.stat()
         return self.Status(
             size = stat.st_size,
             mode = stat.st_mode,
+            time = stat.st_mtime,
             owner_id = stat.st_uid,
             group_id = stat.st_gid,
-            owner_name = pwd and pwd.getpwuid(stat.st_uid).pw_name,
-            group_name = grp and grp.getgrgid(stat.st_gid).gr_name,
-            access_time = stat.st_atime,
-            modification_time = stat.st_mtime,
         )
+    
+    def owner_name(self, path: pathlib.Path) -> str:
+        return path.owner()
+    
+    def group_name(self, path: pathlib.Path) -> str:
+        return path.group()
     
     def rename(self, path: pathlib.Path, target: pathlib.Path) -> None:
         path.rename(target)
