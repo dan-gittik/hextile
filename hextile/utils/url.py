@@ -87,13 +87,14 @@ class URL:
     
     def _format(self, show_password: bool) -> str:
         output = []
-        if self.scheme is not None:
+        if self.scheme:
             output.append(f'{self.scheme}:')
-        if self.host is not None:
+        if self.scheme or self.host:
             output.append('//')
-            if self.username is not None:
+        if self.host:
+            if self.username:
                 output.append(self.username)
-                if self.password is not None:
+                if self.password:
                     if show_password:
                         password = self.password
                     else:
@@ -101,15 +102,15 @@ class URL:
                     output.append(f':{password}')
                 output.append('@')
             output.append(self.host)
-            if self.port is not None:
+            if self.port:
                 output.append(f':{self.port}')
-        if self.path is not None:
-            if self.host is not None and not self.path.startswith('/'):
+        if self.path:
+            if self.host and not self.path.startswith('/'):
                 output.append('/')
             output.append(self.path)
         if self.query:
             output.append('?' + urllib.parse.urlencode(self.query))
-        if self.fragment is not None:
+        if self.fragment:
             output.append(f'#{self.fragment}')
         return ''.join(output)
     

@@ -4,7 +4,7 @@ from hextile.utils import URL
 
 
 def test_url():
-    url = URL.from_string('scheme://user:1234@host:8000/path?x=1&y=2#fragment')
+    url = URL.parse('scheme://user:1234@host:8000/path?x=1&y=2#fragment')
     assert url.scheme == 'scheme'
     assert url.username == 'user'
     assert url.password == '1234'
@@ -18,76 +18,76 @@ def test_url():
 
 
 def test_url_scheme():
-    assert URL.from_string('path').scheme is None
-    assert URL.from_string('//host').scheme is None
-    assert URL.from_string('scheme://host').scheme == 'scheme'
-    assert URL.from_string('scheme+extra://host').scheme == 'scheme+extra'
+    assert URL.parse('path').scheme is None
+    assert URL.parse('//host').scheme is None
+    assert URL.parse('scheme://host').scheme == 'scheme'
+    assert URL.parse('scheme+extra://host').scheme == 'scheme+extra'
 
 
 def test_url_username():
-    assert URL.from_string('path').username is None
-    assert URL.from_string('user@path').username is None
-    assert URL.from_string('//host').username is None
-    assert URL.from_string('//user@host').username == 'user'
+    assert URL.parse('path').username is None
+    assert URL.parse('user@path').username is None
+    assert URL.parse('//host').username is None
+    assert URL.parse('//user@host').username == 'user'
 
 
 def test_url_password():
-    assert URL.from_string('path').password is None
-    assert URL.from_string('user:1234@path').password is None
-    assert URL.from_string('//user@host').password is None
-    assert URL.from_string('//user:1234@host').password == '1234'
-    assert URL.from_string('//user::@@host').password == ':@'
-    assert URL.from_string('//user:@:@host').password == '@:'
+    assert URL.parse('path').password is None
+    assert URL.parse('user:1234@path').password is None
+    assert URL.parse('//user@host').password is None
+    assert URL.parse('//user:1234@host').password == '1234'
+    assert URL.parse('//user::@@host').password == ':@'
+    assert URL.parse('//user:@:@host').password == '@:'
 
 
 def test_url_host():
-    assert URL.from_string('path').host is None
-    assert URL.from_string('//host').host == 'host'
-    assert URL.from_string('//host/').host == 'host'
-    assert URL.from_string('//www.example.com').host == 'www.example.com'
+    assert URL.parse('path').host is None
+    assert URL.parse('//host').host == 'host'
+    assert URL.parse('//host/').host == 'host'
+    assert URL.parse('//www.example.com').host == 'www.example.com'
 
 
 def test_url_port():
-    assert URL.from_string('path').port is None
-    assert URL.from_string('path:8000').port is None
-    assert URL.from_string('//host').port is None
-    assert URL.from_string('//host:8000').port == 8000
+    assert URL.parse('path').port is None
+    assert URL.parse('path:8000').port is None
+    assert URL.parse('//host').port is None
+    assert URL.parse('//host:8000').port == 8000
     with pytest.raises(ValueError, match=r'invalid port port \(expected an integer\)'):
-        URL.from_string('//host:port')
+        URL.parse('//host:port')
     with pytest.raises(ValueError, match=r'invalid port 0 \(expected an integer between 1 and 65535\)'):
-        URL.from_string('//host:0')
+        URL.parse('//host:0')
     with pytest.raises(ValueError, match=r'invalid port 65536 \(expected an integer between 1 and 65535\)'):
-        URL.from_string('//host:65536')
+        URL.parse('//host:65536')
 
 
 def test_url_path():
-    assert URL.from_string('').path is None
-    assert URL.from_string('path').path == 'path'
-    assert URL.from_string('//host').path is None
-    assert URL.from_string('//host/').path == '/'
-    assert URL.from_string('//host/path').path == '/path'
-    assert URL.from_string('//host/path/').path == '/path/'
-    assert URL.from_string('//host/directory/file.txt').path == '/directory/file.txt'
+    assert URL.parse('').path is None
+    assert URL.parse('path').path == 'path'
+    assert URL.parse('//host').path is None
+    assert URL.parse('//host/').path == '/'
+    assert URL.parse('//host/path').path == '/path'
+    assert URL.parse('//host/path/').path == '/path/'
+    assert URL.parse('//host/directory/file.txt').path == '/directory/file.txt'
 
 
 def test_url_query():
-    assert URL.from_string('path').query == {}
-    assert URL.from_string('path?').query == {}
-    assert URL.from_string('path?x=1').query == {'x': '1'}
-    assert URL.from_string('//host?x=1').query == {'x': '1'}
-    assert URL.from_string('path?x=1&x=2').query == {'x': '2'}
-    assert URL.from_string('path?x=1&y=2').query == {'x': '1', 'y': '2'}
+    assert URL.parse('path').query == {}
+    assert URL.parse('path?').query == {}
+    assert URL.parse('path?x=1').query == {'x': '1'}
+    assert URL.parse('//host?x=1').query == {'x': '1'}
+    assert URL.parse('path?x=1&x=2').query == {'x': '2'}
+    assert URL.parse('path?x=1&y=2').query == {'x': '1', 'y': '2'}
 
 
 def test_url_fragment():
-    assert URL.from_string('path').fragment is None
-    assert URL.from_string('path#').fragment is None
-    assert URL.from_string('path#fragment').fragment == 'fragment'
-    assert URL.from_string('//host#fragment').fragment == 'fragment'
+    assert URL.parse('path').fragment is None
+    assert URL.parse('path#').fragment is None
+    assert URL.parse('path#fragment').fragment == 'fragment'
+    assert URL.parse('//host#fragment').fragment == 'fragment'
 
 
 def test_format():
-    assert str(URL(scheme='scheme')) == 'scheme:'
+    assert str(URL(scheme='scheme')) == 'scheme://'
     assert str(URL(scheme='scheme', host='host')) == 'scheme://host'
     assert str(URL(host='host')) == '//host'
     assert str(URL(username='user')) == ''
@@ -120,4 +120,4 @@ def test_url_reveal():
 
 def test_url_from_url():
     url = URL()
-    assert url.from_string(url) is url
+    assert url.parse(url) is url
