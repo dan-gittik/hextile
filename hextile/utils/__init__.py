@@ -26,6 +26,16 @@ from .colors import (
     hex_to_rgb,
     hex_to_hsv,
 )
+from .xterm import (
+    validate_xterm,
+    xterm_to_rgb,
+    rgb_to_xterm,
+    xterm_to_hsv,
+    hsv_to_xterm,
+    xterm_to_hex,
+    hex_to_xterm,
+    resolve_xterm,
+)
 
 
 __all__ = [
@@ -41,17 +51,25 @@ __all__ = [
     'hex_distance',
     'hex_to_hsv',
     'hex_to_rgb',
+    'hex_to_xterm',
     'hsv_distance',
     'hsv_to_hex',
     'hsv_to_rgb',
+    'hsv_to_xterm',
     'now',
     'RGBType',
+    'resolve_xterm',
     'rgb_distance',
     'rgb_to_hex',
     'rgb_to_hsv',
+    'rgb_to_xterm',
     'URL',
     'URLType',
     'validate_hex',
     'validate_hsv',
     'validate_rgb',
+    'validate_xterm',
+    'xterm_to_hex',
+    'xterm_to_hsv',
+    'xterm_to_rgb',
 ]
