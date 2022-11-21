@@ -1,7 +1,6 @@
 import pytest
 
 from hextile.utils import (
-    validate_xterm,
     xterm_to_rgb,
     rgb_to_xterm,
     xterm_to_hsv,
@@ -39,17 +38,6 @@ gray_hex = '#888888'
 red_hex = '#ff0000'
 green_hex = '#00ff00'
 yellow_hex = '#ffff00'
-
-
-def test_validate_xterm():
-    validate_xterm(black_xterm)
-    validate_xterm(white_xterm)
-    with pytest.raises(ValueError, match=r'invalid xterm -1 \(expected an integer between 0 and 256\)'):
-        validate_xterm(-1)
-    with pytest.raises(ValueError, match=r'invalid xterm 256 \(expected an integer between 0 and 256\)'):
-        validate_xterm(256)
-    with pytest.raises(ValueError, match=r'invalid xterm 127.5 \(expected an integer between 0 and 256\)'):
-        validate_xterm(127.5)
 
 
 def test_xterm_to_rgb():
@@ -126,5 +114,14 @@ def test_resolve_xterm():
     assert resolve_xterm(red_rgb) == red_xterm
     with pytest.raises(ValueError, match=r'invalid color 1.0 \(expected an xterm ID integer, a hexdecimal color string, or an RGB color tuple of 3 integers between 0 and 256\)'):
         resolve_xterm(1.0)
-    with pytest.raises(ValueError, match=r'invalid color (1, 2) \(expected an xterm ID integer, a hexdecimal color string, or an RGB color tuple of 3 integers between 0 and 256\)'):
+    with pytest.raises(ValueError, match=r'invalid color \(1, 2\) \(expected an xterm ID integer, a hexdecimal color string, or an RGB color tuple of 3 integers between 0 and 256\)'):
         resolve_xterm((1, 2))
+
+
+def test_invalid_xterm():
+    with pytest.raises(ValueError, match=r'invalid xterm -1 \(expected an integer between 0 and 256\)'):
+        xterm_to_rgb(-1)
+    with pytest.raises(ValueError, match=r'invalid xterm 256 \(expected an integer between 0 and 256\)'):
+        xterm_to_rgb(256)
+    with pytest.raises(ValueError, match=r'invalid xterm 127.5 \(expected an integer between 0 and 256\)'):
+        xterm_to_rgb(127.5)

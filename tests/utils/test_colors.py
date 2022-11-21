@@ -1,15 +1,12 @@
 import pytest
 
 from hextile.utils import (
-    validate_rgb,
     rgb_distance,
     rgb_to_hsv,
     rgb_to_hex,
-    validate_hsv,
     hsv_distance,
     hsv_to_rgb,
     hsv_to_hex,
-    validate_hex,
     hex_distance,
     hex_to_rgb,
     hex_to_hsv,
@@ -38,17 +35,6 @@ green_hex = '#00ff00'
 yellow_hex = '#ffff00'
 
 
-def test_validate_rgb():
-    validate_rgb(black_rgb)
-    validate_rgb(white_rgb)
-    with pytest.raises(ValueError, match=r'invalid RGB color \(-1, 0, 0\): invalid red value -1 \(expected an integer between 0 and 256\)'):
-        validate_rgb((-1, 0, 0))
-    with pytest.raises(ValueError, match=r'invalid RGB color \(256, 0, 0\): invalid red value 256 \(expected an integer between 0 and 256\)'):
-        validate_rgb((256, 0, 0))
-    with pytest.raises(ValueError, match=r'invalid RGB color \(127.5, 0, 0\): invalid red value 127.5 \(expected an integer between 0 and 256\)'):
-        validate_rgb((127.5, 0, 0))
-
-
 def test_rgb_distance():
     assert rgb_distance(black_rgb, white_rgb) == rgb_distance(white_rgb, black_rgb)
     assert rgb_distance(black_rgb, gray_rgb) < rgb_distance(black_rgb, white_rgb)
@@ -73,27 +59,13 @@ def test_rgb_to_hex():
     assert rgb_to_hex(yellow_rgb) == yellow_hex
 
 
-def test_validate_hsv():
-    validate_hsv(black_hsv)
-    validate_hsv(white_hsv)
-    with pytest.raises(ValueError, match=r'invalid HSV color \(-1, 0, 0\): invalid hue -1 \(expected an integer between 0 and 360\)'):
-        validate_hsv((-1, 0, 0))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(360, 0, 0\): invalid hue 360 \(expected an integer between 0 and 360\)'):
-        validate_hsv((360, 0, 0))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(0.5, 0, 0\): invalid hue 0.5 \(expected an integer between 0 and 360\)'):
-        validate_hsv((0.5, 0, 0))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(0, -1, 0\): invalid saturation -1 \(expected an integer between 0 and 100\)'):
-        validate_hsv((0, -1, 0))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 101, 0\): invalid saturation 101 \(expected an integer between 0 and 100\)'):
-        validate_hsv((0, 101, 0))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0.5, 0\): invalid saturation 0.5 \(expected an integer between 0 and 100\)'):
-        validate_hsv((0, 0.5, 0))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0, -1\): invalid value -1 \(expected an integer between 0 and 100\)'):
-        validate_hsv((0, 0, -1))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0, 101\): invalid value 101 \(expected an integer between 0 and 100\)'):
-        validate_hsv((0, 0, 101))
-    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0, 0.5\): invalid value 0.5 \(expected an integer between 0 and 100\)'):
-        validate_hsv((0, 0, 0.5))
+def test_invalid_rgb():
+    with pytest.raises(ValueError, match=r'invalid RGB color \(-1, 0, 0\): invalid red value -1 \(expected an integer between 0 and 256\)'):
+        rgb_to_hsv((-1, 0, 0))
+    with pytest.raises(ValueError, match=r'invalid RGB color \(256, 0, 0\): invalid red value 256 \(expected an integer between 0 and 256\)'):
+        rgb_to_hsv((256, 0, 0))
+    with pytest.raises(ValueError, match=r'invalid RGB color \(127.5, 0, 0\): invalid red value 127.5 \(expected an integer between 0 and 256\)'):
+        rgb_to_hsv((127.5, 0, 0))
 
 
 def test_hsv_distance():
@@ -120,19 +92,25 @@ def test_hsv_to_hex():
     assert hsv_to_hex(yellow_hsv) == yellow_hex
 
 
-def test_validate_hex():
-    validate_hex(black_hex)
-    validate_hex(white_hex)
-    validate_hex(black_hex[1:])
-    validate_hex(white_hex[1:])
-    with pytest.raises(ValueError, match=r"invalid hexadecimal color '#fffff' \(expected 6 hexdecimal characters, possibly starting with #\)"):
-        validate_hex('#fffff')
-    with pytest.raises(ValueError, match=r"invalid hexadecimal color '#fffffff' \(expected 6 hexdecimal characters, possibly starting with #\)"):
-        validate_hex('#fffffff')
-    with pytest.raises(ValueError, match=r"invalid hexadecimal color '#fffffg' \(expected 6 hexdecimal characters, possibly starting with #\)"):
-        validate_hex('#fffffg')
-    with pytest.raises(ValueError, match=r"invalid hexadecimal color '\$ffffff' \(expected 6 hexdecimal characters, possibly starting with #\)"):
-        validate_hex('$ffffff')
+def test_invalid_hsv():
+    with pytest.raises(ValueError, match=r'invalid HSV color \(-1, 0, 0\): invalid hue -1 \(expected an integer between 0 and 360\)'):
+        hsv_to_rgb((-1, 0, 0))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(360, 0, 0\): invalid hue 360 \(expected an integer between 0 and 360\)'):
+        hsv_to_rgb((360, 0, 0))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(0.5, 0, 0\): invalid hue 0.5 \(expected an integer between 0 and 360\)'):
+        hsv_to_rgb((0.5, 0, 0))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(0, -1, 0\): invalid saturation -1 \(expected an integer between 0 and 100\)'):
+        hsv_to_rgb((0, -1, 0))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 101, 0\): invalid saturation 101 \(expected an integer between 0 and 100\)'):
+        hsv_to_rgb((0, 101, 0))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0.5, 0\): invalid saturation 0.5 \(expected an integer between 0 and 100\)'):
+        hsv_to_rgb((0, 0.5, 0))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0, -1\): invalid value -1 \(expected an integer between 0 and 100\)'):
+        hsv_to_rgb((0, 0, -1))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0, 101\): invalid value 101 \(expected an integer between 0 and 100\)'):
+        hsv_to_rgb((0, 0, 101))
+    with pytest.raises(ValueError, match=r'invalid HSV color \(0, 0, 0.5\): invalid value 0.5 \(expected an integer between 0 and 100\)'):
+        hsv_to_rgb((0, 0, 0.5))
 
 
 def test_hex_distance():
@@ -157,3 +135,14 @@ def test_hex_to_hsv():
     assert hex_to_hsv(red_hex) == red_hsv
     assert hex_to_hsv(green_hex) == green_hsv
     assert hex_to_hsv(yellow_hex) == yellow_hsv
+
+
+def test_validate_hex():
+    with pytest.raises(ValueError, match=r"invalid hexadecimal color '#fffff' \(expected 6 hexdecimal characters, possibly starting with #\)"):
+        hex_to_rgb('#fffff')
+    with pytest.raises(ValueError, match=r"invalid hexadecimal color '#fffffff' \(expected 6 hexdecimal characters, possibly starting with #\)"):
+        hex_to_rgb('#fffffff')
+    with pytest.raises(ValueError, match=r"invalid hexadecimal color '#fffffg' \(expected 6 hexdecimal characters, possibly starting with #\)"):
+        hex_to_rgb('#fffffg')
+    with pytest.raises(ValueError, match=r"invalid hexadecimal color '\$ffffff' \(expected 6 hexdecimal characters, possibly starting with #\)"):
+        hex_to_rgb('$ffffff')
