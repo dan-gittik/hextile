@@ -3,23 +3,23 @@ import time
 
 import pytest
 
-from hextile.utils import property
+from hextile.utils import attribute
 
 
-def test_property():
+def test_attribute():
     class A:
-        @property
+        @attribute
         def p(self):
             pass
-    assert isinstance(A.p, property)
+    assert isinstance(A.p, attribute)
     assert A.p.name == 'p'
-    assert str(A.p) == "property 'p'"
-    assert repr(A.p) == "<property 'p'>"
+    assert str(A.p) == "attribute 'p'"
+    assert repr(A.p) == "<attribute 'p'>"
 
 
 def test_get():
     class A:
-        @property
+        @attribute
         def p(self):
             return 1
     a = A()
@@ -28,7 +28,7 @@ def test_get():
 
 def test_set():
     class A:
-        @property
+        @attribute
         def p(self):
             return 1
     a = A()
@@ -39,7 +39,7 @@ def test_set():
 def test_setter():
     set = []
     class A:
-        @property
+        @attribute
         def p(self):
             return 1
         @p.setter
@@ -53,7 +53,7 @@ def test_setter():
 
 def test_on_set():
     class A:
-        @property
+        @attribute
         def p(self):
             return 1
         @p.on_set
@@ -67,7 +67,7 @@ def test_on_set():
 def test_deleter():
     deleted = []
     class A:
-        @property
+        @attribute
         def p(self):
             return 1
         @p.deleter
@@ -85,7 +85,7 @@ def test_deleter():
 def test_on_delete():
     deleted = []
     class A:
-        @property
+        @attribute
         def p(self):
             return 1
         @p.on_delete
@@ -102,14 +102,14 @@ def test_on_delete():
 
 def test_readonly():
     class A:
-        @property(readonly=True)
+        @attribute(readonly=True)
         def p(self):
             return 1
     a = A()
     assert a.p == 1
-    with pytest.raises(TypeError, match=r"p is a read-only property, and cannot be set"):
+    with pytest.raises(TypeError, match=r"p is a read-only attribute, and cannot be set"):
         a.p = 2
-    with pytest.raises(TypeError, match=r"p is a read-only property, and cannot be deleted"):
+    with pytest.raises(TypeError, match=r"p is a read-only attribute, and cannot be deleted"):
         del a.p
 
 
@@ -117,7 +117,7 @@ def test_cached():
     class A:
         def __init__(self):
             self.x = 0
-        @property(cached=True)
+        @attribute(cached=True)
         def p(self):
             self.x += 1
             return self.x
@@ -126,18 +126,18 @@ def test_cached():
     assert a.p == 1
 
 
-def test_cached_property():
+def test_cached_attribute():
     class A:
-        @property(cached=True)
+        @attribute(cached=True)
         def p(self):
             return 1
-    assert A.p.name in A._cached_properties
+    assert A.p.name in A._cached_attributes
     assert A.clear_cache
 
 
 def test_cached_set():
     class A:
-        @property(cached=True)
+        @attribute(cached=True)
         def p(self):
             return 1
     a = A()
@@ -146,9 +146,9 @@ def test_cached_set():
 
 
 def test_cached_setter():
-    with pytest.raises(TypeError, match=r'p is a cached property, and cannot have a custom setter'):
+    with pytest.raises(TypeError, match=r'p is a cached attribute, and cannot have a custom setter'):
         class A:
-            @property(cached=True)
+            @attribute(cached=True)
             def p(self):
                 return 1
             @p.setter
@@ -160,7 +160,7 @@ def test_cached_on_set():
     class A:
         def __init__(self):
             self.x = 0
-        @property(cached=True)
+        @attribute(cached=True)
         def p(self):
             self.x += 1
             return self.x
@@ -174,9 +174,9 @@ def test_cached_on_set():
 
 
 def test_cached_deleter():
-    with pytest.raises(TypeError, match=r'p is a cached property, and cannot have a custom deleter'):
+    with pytest.raises(TypeError, match=r'p is a cached attribute, and cannot have a custom deleter'):
         class A:
-            @property(cached=True)
+            @attribute(cached=True)
             def p(self):
                 return 1
             @p.deleter
@@ -187,7 +187,7 @@ def test_cached_deleter():
 def test_cached_on_delete():
     deleted = []
     class A:
-        @property(cached=True)
+        @attribute(cached=True)
         def p(self):
             return 1
         @p.on_delete
@@ -206,11 +206,11 @@ def test_clear_cache():
         def __init__(self):
             self.x = 0
             self.y = 0
-        @property(cached=True)
+        @attribute(cached=True)
         def p(self):
             self.x += 1
             return self.x
-        @property(cached=True)
+        @attribute(cached=True)
         def q(self):
             self.y += 1
             return self.y
@@ -230,7 +230,7 @@ def test_threadsafe_get():
     class A:
         def __init__(self):
             self.x = 0
-        @property
+        @attribute
         def p(self):
             x = self.x
             time.sleep(0.1)
@@ -247,7 +247,7 @@ def test_threadsafe_get():
     class A:
         def __init__(self):
             self.x = 0
-        @property(threadsafe=True)
+        @attribute(threadsafe=True)
         def p(self):
             x = self.x
             time.sleep(0.1)
@@ -267,7 +267,7 @@ def test_threadsafe_set():
     class A:
         def __init__(self):
             self.x = 0
-        @property
+        @attribute
         def p(self):
             return self.x
         @p.setter
@@ -287,7 +287,7 @@ def test_threadsafe_set():
     class A:
         def __init__(self):
             self.x = 0
-        @property(threadsafe=True)
+        @attribute(threadsafe=True)
         def p(self):
             return self.x
         @p.setter
@@ -308,7 +308,7 @@ def test_threadsafe_delete():
     class A:
         def __init__(self):
             self.x = 2
-        @property
+        @attribute
         def p(self):
             return self.x
         @p.deleter
@@ -329,7 +329,7 @@ def test_threadsafe_delete():
     class A:
         def __init__(self):
             self.x = 2
-        @property(threadsafe=True)
+        @attribute(threadsafe=True)
         def p(self):
             return self.x
         @p.deleter

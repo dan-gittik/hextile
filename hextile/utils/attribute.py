@@ -5,17 +5,17 @@ import threading
 
 
 T = TypeVar('T')
-GetterType = Callable[[object], T]
-SetterType = Callable[[object, T], None]
-DeleterType = Callable[[object], None]
+GetterType = Callable[..., T]
+SetterType = Callable[..., None]
+DeleterType = Callable[..., None]
 OnSetType = Callable[[object, T], T]
 OnDeleteType = Callable[[object], None]
 undefined = object()
 
 
-class property(Generic[T]):
+class attribute(Generic[T]):
 
-    cached_properties_list = '_cached_properties'
+    cached_attributes_list = '_cached_attributes'
     clear_cache_method = 'clear_cache'
 
     default_readonly = False
@@ -51,12 +51,12 @@ class property(Generic[T]):
         self._lock = threading.Lock()
     
     def __str__(self):
-        return f'property {self.name!r}'
+        return f'attribute {self.name!r}'
     
     def __repr__(self):
         return f'<{self}>'
     
-    def __call__(self, getter: GetterType) -> property:
+    def __call__(self, getter: GetterType) -> attribute:
         self._getter = getter
         if self.name is None:
             self.name = getter.__name__
@@ -65,12 +65,12 @@ class property(Generic[T]):
     def __set_name__(self, owner: Type, name: str):
         self.name = name
         if self.cached:
-            cached_properties = getattr(owner, self.cached_properties_list, None)
-            if cached_properties is None:
-                cached_properties = []
-                setattr(owner, self.cached_properties_list, cached_properties)
+            cached_attributes = getattr(owner, self.cached_attributes_list, None)
+            if cached_attributes is None:
+                cached_attributes = []
+                setattr(owner, self.cached_attributes_list, cached_attributes)
                 setattr(owner, self.clear_cache_method, clear_cache)
-            cached_properties.append(name)
+            cached_attributes.append(name)
     
     def __get__(self, instance: object, owner: Type = None) -> T:
         if instance is None:
@@ -90,7 +90,7 @@ class property(Generic[T]):
     
     def __set__(self, instance: object, value: Any) -> None:
         if self.readonly:
-            raise TypeError(f'{self.name} is a read-only property, and cannot be set')
+            raise TypeError(f'{self.name} is a read-only attribute, and cannot be set')
         try:
             if self.threadsafe:
                 self._lock.acquire()
@@ -106,7 +106,7 @@ class property(Generic[T]):
     
     def __delete__(self, instance: object) -> None:
         if self.readonly:
-            raise TypeError(f'{self.name} is a read-only property, and cannot be deleted')
+            raise TypeError(f'{self.name} is a read-only attribute, and cannot be deleted')
         try:
             if self.threadsafe:
                 self._lock.acquire()
@@ -120,27 +120,27 @@ class property(Generic[T]):
             if self.threadsafe:
                 self._lock.release()
     
-    def setter(self, setter: SetterType) -> property:
+    def setter(self, setter: SetterType) -> attribute:
         if self.cached:
-            raise TypeError(f'{self.name} is a cached property, and cannot have a custom setter')
+            raise TypeError(f'{self.name} is a cached attribute, and cannot have a custom setter')
         self._setter = setter
         return self
     
-    def on_set(self, on_set: OnSetType) -> property:
+    def on_set(self, on_set: OnSetType) -> attribute:
         self._on_set = on_set
         return self
     
-    def deleter(self, deleter: DeleterType) -> property:
+    def deleter(self, deleter: DeleterType) -> attribute:
         if self.cached:
-            raise TypeError(f'{self.name} is a cached property, and cannot have a custom deleter')
+            raise TypeError(f'{self.name} is a cached attribute, and cannot have a custom deleter')
         self._deleter = deleter
         return self
     
-    def on_delete(self, on_delete: OnDeleteType) -> property:
+    def on_delete(self, on_delete: OnDeleteType) -> attribute:
         self._on_delete = on_delete
         return self
 
 
 def clear_cache(self) -> None:
-    for name in getattr(self.__class__, property.cached_properties_list, []):
+    for name in getattr(self.__class__, attribute.cached_attributes_list, []):
         self.__dict__.pop(name, None)
