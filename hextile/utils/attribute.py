@@ -5,11 +5,6 @@ import threading
 
 
 T = TypeVar('T')
-GetterType = Callable[..., T]
-SetterType = Callable[..., None]
-DeleterType = Callable[..., None]
-OnSetType = Callable[[object, T], T]
-OnDeleteType = Callable[[object], None]
 undefined = object()
 
 
@@ -24,9 +19,9 @@ class attribute(Generic[T]):
 
     def __init__(
             self,
-            getter: GetterType = None,
-            setter: SetterType = None,
-            deleter: DeleterType = None,
+            getter: Callable[..., T] = None,
+            setter: Callable[..., None] = None,
+            deleter: Callable[..., None] = None,
             /,
             *,
             readonly: bool = None,
@@ -46,8 +41,8 @@ class attribute(Generic[T]):
         self._getter = getter
         self._setter = setter
         self._deleter = deleter
-        self._on_set: OnSetType = None
-        self._on_delete: OnDeleteType = None
+        self._on_set: Callable[..., T] = None
+        self._on_delete: Callable[..., None] = None
         self._lock = threading.Lock()
     
     def __str__(self):
@@ -56,7 +51,7 @@ class attribute(Generic[T]):
     def __repr__(self):
         return f'<{self}>'
     
-    def __call__(self, getter: GetterType) -> attribute:
+    def __call__(self, getter: Callable[..., T]) -> attribute:
         self._getter = getter
         if self.name is None:
             self.name = getter.__name__
@@ -72,23 +67,23 @@ class attribute(Generic[T]):
                 setattr(owner, self.clear_cache_method, clear_cache)
             cached_attributes.append(name)
     
-    def __get__(self, instance: object, owner: Type = None) -> T:
+    def __get__(self, instance, owner = None) -> T:
         if instance is None:
             return self
         try:
             if self.threadsafe:
                 self._lock.acquire()
-            value = instance.__dict__.get(self.name, undefined)
+            value = vars(instance).get(self.name, undefined)
             if value is undefined:
                 value = self._getter(instance)
                 if self.cached:
-                    instance.__dict__[self.name] = value
+                    vars(instance)[self.name] = value
             return value
         finally:
             if self.threadsafe:
                 self._lock.release()
     
-    def __set__(self, instance: object, value: Any) -> None:
+    def __set__(self, instance, value) -> None:
         if self.readonly:
             raise TypeError(f'{self.name} is a read-only attribute, and cannot be set')
         try:
@@ -104,7 +99,7 @@ class attribute(Generic[T]):
             if self.threadsafe:
                 self._lock.release()
     
-    def __delete__(self, instance: object) -> None:
+    def __delete__(self, instance) -> None:
         if self.readonly:
             raise TypeError(f'{self.name} is a read-only attribute, and cannot be deleted')
         try:
@@ -115,32 +110,32 @@ class attribute(Generic[T]):
             if self._deleter:
                 self._deleter(instance)
             else:
-                instance.__dict__.pop(self.name, None)
+                vars(instance).pop(self.name, None)
         finally:
             if self.threadsafe:
                 self._lock.release()
     
-    def setter(self, setter: SetterType) -> attribute:
+    def setter(self, setter: Callable[..., None]) -> attribute:
         if self.cached:
             raise TypeError(f'{self.name} is a cached attribute, and cannot have a custom setter')
         self._setter = setter
         return self
     
-    def on_set(self, on_set: OnSetType) -> attribute:
+    def on_set(self, on_set: Callable[..., T]) -> attribute:
         self._on_set = on_set
         return self
     
-    def deleter(self, deleter: DeleterType) -> attribute:
+    def deleter(self, deleter: Callable[..., None]) -> attribute:
         if self.cached:
             raise TypeError(f'{self.name} is a cached attribute, and cannot have a custom deleter')
         self._deleter = deleter
         return self
     
-    def on_delete(self, on_delete: OnDeleteType) -> attribute:
+    def on_delete(self, on_delete: Callable[..., None]) -> attribute:
         self._on_delete = on_delete
         return self
 
 
 def clear_cache(self) -> None:
     for name in getattr(self.__class__, attribute.cached_attributes_list, []):
-        self.__dict__.pop(name, None)
+        vars(self).pop(name, None)

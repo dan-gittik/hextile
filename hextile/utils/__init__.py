@@ -8,7 +8,7 @@ from .datetime_ import (
     datetime_from_string,
 )
 from .url import URL, URLType
-from .property import property
+from .attribute import attribute
 from .execution import Execution
 from .colors import (
     RGBType,
@@ -36,6 +36,7 @@ from .driver import Driver
 
 
 __all__ = [
+    'attribute',
     'Dictionary',
     'datetime',
     'datetime_from_string',
@@ -54,7 +55,6 @@ __all__ = [
     'hsv_to_rgb',
     'hsv_to_xterm',
     'now',
-    'property',
     'RGBType',
     'resolve_xterm',
     'rgb_distance',
