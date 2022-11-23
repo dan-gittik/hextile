@@ -11,21 +11,21 @@ def test_execution():
     assert e.stderr == b'stderr'
 
 
-def test_execution_run():
+def test_run():
     e = Execution.run('echo', 'Hello, world!')
     assert e.exit_code == 0
     assert e.stdout == b'Hello, world!\n'
     assert e.stderr == b''
 
 
-def test_execution_exit_code():
+def test_exit_code():
     e = Execution.run('bash', '-c', 'exit 1')
     assert e.exit_code == 1
     e = Execution.run('bash', '-c', 'exit 2')
     assert e.exit_code == 2
 
 
-def test_execution_stdout():
+def test_stdout():
     e = Execution.run('echo', 'Hello, world!')
     assert e.stdout == b'Hello, world!\n'
     assert e.output == 'Hello, world!'
@@ -34,20 +34,20 @@ def test_execution_stdout():
     assert e.output == '1 2 3'
 
 
-def test_execution_stderr():
+def test_stderr():
     e = Execution.run('bash', '-c', 'echo error >&2')
     assert e.stderr == b'error\n'
     assert e.error == 'error'
 
 
-def test_execution_stdin():
+def test_stdin():
     e = Execution.run('cat', '-', stdin='Hello, world!')
     assert e.stdout == b'Hello, world!'
     e = Execution.run('cat', '-', stdin=b'Hello, world!')
     assert e.stdout == b'Hello, world!'
 
 
-def test_execution_timeout():
+def test_timeout():
     started = time.time()
     e = Execution.run('sleep', 3, timeout=1)
     assert e.exit_code == -signal.SIGTERM
@@ -55,7 +55,7 @@ def test_execution_timeout():
     assert 1 <= elapsed < 1.1
 
 
-def test_execution_sigterm_timeout():
+def test_sigterm_timeout():
     started = time.time()
     e = Execution.run('bash', '-c', 'trap : SIGTERM; sleep 3', timeout=1, sigterm_timeout=1)
     assert e.exit_code == -signal.SIGKILL
@@ -63,7 +63,7 @@ def test_execution_sigterm_timeout():
     assert 2 <= elapsed < 2.1
 
 
-def test_execution_exact_timeout():
+def test_exact_timeout():
     started = time.time()
     e = Execution.run('bash', '-c', 'trap : SIGTERM; sleep 3', timeout=1, sigterm_timeout=0)
     assert e.exit_code == -signal.SIGKILL
