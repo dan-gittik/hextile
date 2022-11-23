@@ -33,10 +33,18 @@ class URL:
         self.fragment = fragment
     
     def __str__(self):
-        return self._format(show_password=False)
+        return self._format()
 
     def __repr__(self):
-        return f'<URL {self}>'
+        return f'URL({self._format()!r})'
+    
+    def __eq__(self, other):
+        if isinstance(other, URL):
+            return self._format() == other._format()
+        return self._format() == other
+    
+    def __hash__(self):
+        return hash(self._format())
     
     @classmethod
     def parse(cls, string: URLType) -> URL:
@@ -85,7 +93,7 @@ class URL:
     def reveal(self) -> str:
         return self._format(show_password=True)
     
-    def _format(self, show_password: bool) -> str:
+    def _format(self, show_password: bool = False) -> str:
         output = []
         if self.scheme:
             output.append(f'{self.scheme}:')

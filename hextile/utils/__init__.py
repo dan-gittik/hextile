@@ -8,7 +8,7 @@ from .datetime_ import (
     datetime_from_string,
 )
 from .url import URL, URLType
-from .cachedproperty import cached_property
+from .property import property
 from .execution import Execution
 from .colors import (
     RGBType,
@@ -32,16 +32,17 @@ from .xterm import (
     hex_to_xterm,
     resolve_xterm,
 )
+from .driver import Driver
 
 
 __all__ = [
-    'cached_property',
     'Dictionary',
     'datetime',
     'datetime_from_string',
     'datetime_from_timestamp',
     'datetime_to_string',
     'datetime_to_timestamp',
+    'Driver',
     'Execution',
     'HSVType',
     'hex_distance',
@@ -53,6 +54,7 @@ __all__ = [
     'hsv_to_rgb',
     'hsv_to_xterm',
     'now',
+    'property',
     'RGBType',
     'resolve_xterm',
     'rgb_distance',

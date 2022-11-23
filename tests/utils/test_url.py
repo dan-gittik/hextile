@@ -14,24 +14,24 @@ def test_url():
     assert url.query == {'x': '1', 'y': '2'}
     assert url.fragment == 'fragment'
     assert str(url) == 'scheme://user:********@host:8000/path?x=1&y=2#fragment'
-    assert repr(url) == '<URL scheme://user:********@host:8000/path?x=1&y=2#fragment>'
+    assert repr(url) == "URL('scheme://user:********@host:8000/path?x=1&y=2#fragment')"
 
 
-def test_url_scheme():
+def test_scheme():
     assert URL.parse('path').scheme is None
     assert URL.parse('//host').scheme is None
     assert URL.parse('scheme://host').scheme == 'scheme'
     assert URL.parse('scheme+extra://host').scheme == 'scheme+extra'
 
 
-def test_url_username():
+def test_username():
     assert URL.parse('path').username is None
     assert URL.parse('user@path').username is None
     assert URL.parse('//host').username is None
     assert URL.parse('//user@host').username == 'user'
 
 
-def test_url_password():
+def test_password():
     assert URL.parse('path').password is None
     assert URL.parse('user:1234@path').password is None
     assert URL.parse('//user@host').password is None
@@ -40,14 +40,14 @@ def test_url_password():
     assert URL.parse('//user:@:@host').password == '@:'
 
 
-def test_url_host():
+def test_host():
     assert URL.parse('path').host is None
     assert URL.parse('//host').host == 'host'
     assert URL.parse('//host/').host == 'host'
     assert URL.parse('//www.example.com').host == 'www.example.com'
 
 
-def test_url_port():
+def test_port():
     assert URL.parse('path').port is None
     assert URL.parse('path:8000').port is None
     assert URL.parse('//host').port is None
@@ -60,7 +60,7 @@ def test_url_port():
         URL.parse('//host:65536')
 
 
-def test_url_path():
+def test_path():
     assert URL.parse('').path is None
     assert URL.parse('path').path == 'path'
     assert URL.parse('//host').path is None
@@ -70,7 +70,7 @@ def test_url_path():
     assert URL.parse('//host/directory/file.txt').path == '/directory/file.txt'
 
 
-def test_url_query():
+def test_query():
     assert URL.parse('path').query == {}
     assert URL.parse('path?').query == {}
     assert URL.parse('path?x=1').query == {'x': '1'}
@@ -79,7 +79,7 @@ def test_url_query():
     assert URL.parse('path?x=1&y=2').query == {'x': '1', 'y': '2'}
 
 
-def test_url_fragment():
+def test_fragment():
     assert URL.parse('path').fragment is None
     assert URL.parse('path#').fragment is None
     assert URL.parse('path#fragment').fragment == 'fragment'
@@ -112,12 +112,29 @@ def test_format():
     assert str(URL(host='host', fragment='fragment')) == '//host#fragment'
 
 
-def test_url_reveal():
+def test_reveal():
     url = URL(host='host', username='user', password='1234')
     assert str(url) == '//user:********@host'
     assert url.reveal() == '//user:1234@host'
 
 
-def test_url_from_url():
+def test_from_url():
     url = URL()
     assert url.parse(url) is url
+
+
+def test_equality():
+    url = URL.parse('scheme://host/path')
+    assert url == 'scheme://host/path'
+    assert url != 'scheme://host'
+    assert url != '//host/path'
+    assert url == URL.parse('scheme://host/path')
+    assert url != URL.parse('scheme://host')
+    assert url != URL.parse('//host/path')
+
+
+def test_hash():
+    url1 = URL.parse('scheme://host/path')
+    url2 = URL.parse('scheme://host')
+    url3 = URL.parse('//host/path')
+    assert len({url1, url1, url2, url2, url3, url3}) == 3
