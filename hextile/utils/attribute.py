@@ -5,6 +5,7 @@ import threading
 
 
 T = TypeVar('T')
+S = TypeVar('S')
 undefined = object()
 
 
@@ -51,7 +52,7 @@ class attribute(Generic[T]):
     def __repr__(self):
         return f'<{self}>'
     
-    def __call__(self, getter: Callable[..., T]) -> attribute:
+    def __call__(self, getter: Callable[..., S]) -> attribute[S]:
         self._getter = getter
         if self.name is None:
             self.name = getter.__name__
