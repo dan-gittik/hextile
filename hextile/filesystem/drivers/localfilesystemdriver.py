@@ -30,24 +30,27 @@ class LocalFileSystemDriver(FileSystemDriver):
     def is_directory(self, path: pathlib.Path) -> bool:
         return path.is_dir()
 
+    def owner_name(self, path: pathlib.Path) -> str:
+        try:
+            return path.owner()
+        except NotImplementedError:
+            return None
+    
+    def group_name(self, path: pathlib.Path) -> str:
+        try:
+            return path.group()
+        except NotImplementedError:
+            return None
+    
     def status(self, path: pathlib.Path) -> FileSystemDriver.Status:
         stat = path.stat()
         return self.Status(
             size = stat.st_size,
-            mode = stat.st_mode,
+            mode = stat.st_mode & 0o777,
             time = stat.st_mtime,
             owner_id = stat.st_uid,
             group_id = stat.st_gid,
         )
-    
-    def owner_name(self, path: pathlib.Path) -> str:
-        return path.owner()
-    
-    def group_name(self, path: pathlib.Path) -> str:
-        return path.group()
-    
-    def rename(self, path: pathlib.Path, target: pathlib.Path) -> None:
-        path.rename(target)
     
     def change_mode(self, path: pathlib.Path, mode: int) -> None:
         path.chmod(mode)
@@ -58,8 +61,8 @@ class LocalFileSystemDriver(FileSystemDriver):
     def delete_directory(self, path: pathlib.Path) -> None:
         shutil.rmtree(path)
     
-    def copy_directory(self, path: pathlib.Path, target: pathlib.Path) -> None:
-        shutil.copytree(path, target)
+    def copy_directory(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        shutil.copytree(source, target)
     
     def list_directory(self, path: pathlib.Path) -> Iterator[str]:
         for entry in path.iterdir():
@@ -117,25 +120,56 @@ class LocalFileSystemDriver(FileSystemDriver):
             arguments: Iterable[str],
             stdin: bytes,
             timeout: float,
-    ) -> tuple[int, bytes, bytes]:
-        execution = Execution.run(path, *arguments, stdin=stdin, timeout=timeout)
-        return execution.exit_code, execution.stdout, execution.stderr
+    ) -> Execution:
+        return Execution.run(path, *arguments, stdin=stdin, timeout=timeout, sigterm_timeout=0)
 
     def delete_file(self, path: pathlib.Path) -> None:
         path.unlink()
     
-    def copy_file(self, path: pathlib.Path, target: pathlib.Path) -> None:
-        shutil.copy2(path, target)
+    def copy_file(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        shutil.copy2(source, target)
     
-    def archive(self, path: pathlib.Path, target: pathlib.Path, format: str) -> None:
-        shutil.make_archive(target, format, path)
+    def move(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        source.rename(target)
     
-    def extract(self, path: pathlib.Path, target: pathlib.Path, format: str) -> None:
-        shutil.unpack_archive(path, path, format)
+    def archive_zip(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        self._archive(source, target, 'zip')
     
+    def archive_tar(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        self._archive(source, target, 'tar')
+    
+    def archive_gzip(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        self._archive(source, target, 'gztar')
+
+    def archive_bzip2(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        self._archive(source, target, 'bztar')
+
+    def archive_xz(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        self._archive(source, target, 'xztar')
+
+    def extract_zip(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        shutil.unpack_archive(source, target, 'zip')
+
+    def extract_tar(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        shutil.unpack_archive(source, target, 'tar')
+    
+    def extract_gzip(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        shutil.unpack_archive(source, target, 'gztar')
+    
+    def extract_bzip2(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        shutil.unpack_archive(source, target, 'bztar')
+    
+    def extract_xz(self, source: pathlib.Path, target: pathlib.Path) -> None:
+        shutil.unpack_archive(source, target, 'xztar')
+
     def _resolve_mode(self, offset: int, truncate: bool) -> str:
         if offset == self.end:
             return 'ab'
         if truncate:
             return 'wb'
         return 'rb+'
+    
+    def _archive(self, source: pathlib.Path, target: pathlib.Path, format: str) -> pathlib.Path:
+        prefix = target.with_name(target.name.split('.', 1)[0])
+        path = shutil.make_archive(prefix, format, source)
+        pathlib.Path(path).rename(target)
