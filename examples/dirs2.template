@@ -1,0 +1,8 @@
+% transpile('filesystem')
+dir2/
+    dir/ read=dir/
+    !for i in range(3):
+        dir{i}/
+            file.txt
+                !for j in range(2):
+                    Directory {i}, Line {j}

@@ -1,0 +1,6 @@
+doctype
+html
+    head
+        % insert('head')
+    body
+        % insert('body', required=True)

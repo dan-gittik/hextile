@@ -1,0 +1,10 @@
+user:
+    name: string
+
+post:
+    title: string
+    content: string
+
+user <-> post:
+    user: posts
+    post: user

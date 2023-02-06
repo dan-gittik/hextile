@@ -1,0 +1,6 @@
+      ! xs = list(range(1, n+1))
+      {''.join(str(x).center(5) for x in xs)}
+!? 1/0
+{'-' * 5 * (n + 1)}
+! for x1 in xs:
+    {x1:^5}|{''.join(str(x * x1).center(5) for x in xs)}

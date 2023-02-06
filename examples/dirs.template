@@ -1,0 +1,9 @@
+% transpile('filesystem', 'shell')
+dir/
+    subdir/
+        file-2.txt
+            !for i in range(10):
+                Line {i}
+    file-1.txt
+        Hello, world!
+    $! cp file-1.txt file-3.txt

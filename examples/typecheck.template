@@ -1,0 +1,32 @@
+% interpolate('(|', '|)')
+
+!.typecheck(name, config):
+    ! if config['type'] == 'int':
+        (|name|) = parseInt((|name|))
+        ! if 'min' in config:
+            if ((|name|) < (|config['min']|)) {
+                throw `(|name|) must be greater than (|config['min']|)`
+            }
+        !if 'max' in config:
+            if ((|name|) > (|config['max']|)) {
+                throw `(|name|) must be lesser than (|config['max']|)`
+            }
+    ! if config['type'] == 'dict':
+        ! for item_name, item_config in config['items'].items():
+            ! .typecheck(name + '.' + item_name, item_config)
+
+function (|function_name|)(
+    ! for name, config in parameters.items():
+        ! if 'default' in config:
+            (|name|) = (|config['default']|),
+        ! else:
+            (|name|),
+) {
+    ! for name, config in parameters.items():
+        !.typecheck(name, config)
+    const data = {
+        ! for name in parameters:
+            (|name|): (|name|),
+    }
+    send(data)
+}

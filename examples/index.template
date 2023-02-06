@@ -1,0 +1,25 @@
+% transpile('html')
+% extend('./base.template')
+
+metadata
+    title: Title
+    description: {description}
+
+% define('head')
+    style
+        body {
+            background-color: #fff
+        }
+
+% define('body')
+    #id.class style="font-family: sans-serif":
+        Hello, world!
+    ul
+        !for i in range(n):
+            li foo bar="2:2": {i}
+    script
+        console.log('Hello, world!')
+    component#foo class=Component
+        {
+            message: 'Hello, world!',
+        }
